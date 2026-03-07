@@ -1,0 +1,4 @@
+# fnm: load node environment for git hooks
+eval "$(fnm env --shell bash 2>/dev/null)" || true
+
+npx lint-staged

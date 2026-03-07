@@ -1,0 +1,342 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 300px;
+  height: 400px;
+  overflow: hidden;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 拖拽区域 - 覆盖整个窗口 */
+.drag-region {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-app-region: drag;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.pet-container {
+  position: relative;
+  width: 200px;
+  height: 300px;
+  pointer-events: auto;
+  z-index: 101;
+  -webkit-app-region: no-drag;
+}
+
+.pet {
+  font-size: 150px;
+  cursor: pointer;
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+  display: inline-block;
+  pointer-events: auto;
+  transition: filter 0.3s ease;
+  position: relative;
+}
+
+.pet:hover {
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
+}
+
+/* 自定义宠物图片 */
+.custom-pet-image {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+  transition: filter 0.3s ease;
+}
+
+.pet:hover .custom-pet-image {
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
+}
+
+/* ========== 动画效果 ========== */
+
+/* 呼吸动画 - 待机状态 */
+.pet.breathing {
+  animation: breathe var(--breathe-duration, 2s) ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.05) translateY(-5px);
+  }
+}
+
+/* 跳跃动画 - 点击时 */
+.pet.jumping {
+  animation: jump var(--jump-duration, 0.6s) ease-out;
+}
+
+@keyframes jump {
+  0% {
+    transform: scale(1, 1) translateY(0);
+  }
+  20% {
+    transform: scale(1.1, 0.9) translateY(0);
+  }
+  40% {
+    transform: scale(0.9, 1.1) translateY(-30px);
+  }
+  60% {
+    transform: scale(1.05, 0.95) translateY(-30px);
+  }
+  80% {
+    transform: scale(0.98, 1.02) translateY(-10px);
+  }
+  100% {
+    transform: scale(1, 1) translateY(0);
+  }
+}
+
+/* 左右摇摆 - idle 状态 */
+.pet.swaying {
+  animation: sway var(--sway-duration, 3s) ease-in-out infinite;
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+/* 打瞌睡动画 - 疲惫状态 */
+.pet.sleepy {
+  animation: sleepy var(--sleepy-duration, 1.5s) ease-in-out infinite;
+}
+
+@keyframes sleepy {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.95) rotate(-3deg);
+    opacity: 0.8;
+  }
+}
+
+/* 开心转圈 */
+.pet.happy {
+  animation: happy var(--happy-duration, 0.8s) ease-out;
+}
+
+@keyframes happy {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-15deg) scale(1.1);
+  }
+  50% {
+    transform: rotate(15deg) scale(1.1);
+  }
+  75% {
+    transform: rotate(-15deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+/* 爬行动画 - 移动时 */
+.pet.crawling-right {
+  animation: crawlRight var(--crawl-duration, 0.8s) ease-in-out infinite;
+}
+
+@keyframes crawlRight {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  25% {
+    transform: rotate(5deg) translateY(-3px);
+  }
+  75% {
+    transform: rotate(-5deg) translateY(-3px);
+  }
+}
+
+.pet.crawling-left {
+  animation: crawlLeft var(--crawl-duration, 0.8s) ease-in-out infinite;
+}
+
+@keyframes crawlLeft {
+  0%,
+  100% {
+    transform: scaleX(-1) rotate(0deg) translateY(0);
+  }
+  25% {
+    transform: scaleX(-1) rotate(5deg) translateY(-3px);
+  }
+  75% {
+    transform: scaleX(-1) rotate(-5deg) translateY(-3px);
+  }
+}
+
+/* ========== UI 元素 ========== */
+
+.speech-bubble {
+  position: absolute;
+  top: -60px;
+  right: -20px;
+  background: white;
+  padding: 10px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  max-width: 150px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+}
+
+.speech-bubble.show {
+  opacity: 1;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid white;
+}
+
+.status-bar {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  -webkit-app-region: no-drag;
+  z-index: 50;
+}
+
+.status-item {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 拖动手柄 */
+.drag-handle {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  cursor: move;
+  -webkit-app-region: drag;
+  z-index: 102;
+  transition: background 0.2s;
+}
+
+.drag-handle::before {
+  content: '⋮⋮';
+  font-size: 12px;
+  color: #666;
+  letter-spacing: 2px;
+}
+
+.drag-handle:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: rgba(255, 100, 100, 0.8);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: white;
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    background 0.2s;
+  z-index: 200;
+}
+
+.pet-container:hover .close-btn {
+  opacity: 1;
+}
+
+.close-btn:hover {
+  background: rgba(255, 50, 50, 1);
+  transform: scale(1.1);
+}
+
+/* 自动移动时的提示 */
+.moving-indicator {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.moving-indicator.show {
+  opacity: 1;
+}

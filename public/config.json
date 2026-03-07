@@ -1,0 +1,89 @@
+{
+  "pet": {
+    "name": "大鳐鱼",
+    "emoji": "🐟",
+    "width": 200,
+    "height": 300
+  },
+  "skin": {
+    "enabled": true,
+    "type": "emoji",
+    "customImage": "",
+    "skins": [
+      { "id": "default", "name": "默认", "type": "emoji", "value": "🐟" },
+      { "id": "nemo", "name": "尼莫", "type": "emoji", "value": "🐠" },
+      { "id": "shark", "name": "鲨鱼", "type": "emoji", "value": "🦈" },
+      { "id": "whale", "name": "鲸鱼", "type": "emoji", "value": "🐋" },
+      { "id": "octopus", "name": "章鱼", "type": "emoji", "value": "🐙" },
+      { "id": "crab", "name": "螃蟹", "type": "emoji", "value": "🦀" },
+      { "id": "lobster", "name": "龙虾", "type": "emoji", "value": "🦞" }
+    ],
+    "currentSkin": "default"
+  },
+  "clock": {
+    "enableChime": true,
+    "chimeHours": [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+    "chimeMessage": "现在是 {hour} 点啦！{action}",
+    "chimeActions": [
+      "该休息一下了～",
+      "继续加油！",
+      "注意劳逸结合哦～",
+      "喝口水吧！",
+      "站起来走走～",
+      "现在是工作时间！"
+    ]
+  },
+  "window": {
+    "width": 300,
+    "height": 400,
+    "initialX": 100,
+    "initialY": 100
+  },
+  "animations": {
+    "breatheDuration": 2000,
+    "jumpDuration": 600,
+    "happyDuration": 800,
+    "swayDuration": 3000,
+    "sleepyDuration": 1500,
+    "crawlDuration": 800
+  },
+  "timers": {
+    "energyDecreaseInterval": 60000,
+    "idleActionInterval": 8000,
+    "autoMoveIntervalMin": 15000,
+    "autoMoveIntervalMax": 30000,
+    "messageShowDuration": 2000
+  },
+  "messages": {
+    "click": [
+      "摸鱼时间到！",
+      "该喝水啦～",
+      "一起加油！",
+      "注意休息哦",
+      "嘿嘿～",
+      "点我干嘛呀？",
+      "今天也要开心！",
+      "我要去探险啦！",
+      "别让我跑太远哦～",
+      "继续加油工作吧！",
+      "休息一下眼睛～",
+      "记得站起来走走！",
+      "我在陪你呢！",
+      "保持好心情哦～"
+    ],
+    "idle": ["无聊中...", "该歇歇了", "有什么好玩的？"],
+    "lowEnergy": ["累啦...", "需要休息", "电量低..."],
+    "moving": ["走起！", "去那边看看～", "动一动！"]
+  },
+  "moods": {
+    "happy": ["开心", "兴奋", "满足", "调皮"],
+    "normal": ["平静", "期待"],
+    "tired": ["疲惫", "困倦"],
+    "lowEnergy": "疲惫"
+  },
+  "thresholds": {
+    "tiredMood": 30,
+    "noAutoMove": 10,
+    "canAutoMove": 20
+  }
+}

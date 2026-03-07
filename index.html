@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>桌面宠物 - 大龙虾</title>
+    <link rel="stylesheet" href="src/renderer/styles.css" />
+  </head>
+  <body>
+    <!-- 拖拽层 -->
+    <div class="drag-region"></div>
+
+    <div id="app">
+      <div class="pet-container" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
+        <button class="close-btn" @click="closeApp">×</button>
+        <div class="moving-indicator" :class="{ show: isAutoMoving }">{{ moveDirection }}</div>
+        <div class="speech-bubble" :class="{ show: showMessage }">{{ message }}</div>
+        <div class="pet" :class="petClass" @click="petClick" @mouseenter="petHover">
+          {{ petEmoji }}
+        </div>
+        <div class="status-bar">
+          <div class="status-item">❤️ {{ mood }}</div>
+          <div class="status-item">⚡ {{ energy }}%</div>
+        </div>
+        <div class="drag-handle" @click.prevent></div>
+      </div>
+    </div>
+
+    <script type="module" src="src/renderer/app.ts"></script>
+  </body>
+</html>
