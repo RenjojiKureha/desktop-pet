@@ -452,6 +452,14 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('close-app', () => {
+    if (tray) {
+      tray.destroy();
+      tray = null;
+    }
+    if (mainWindow) {
+      mainWindow.destroy();
+      mainWindow = null;
+    }
     app.quit();
   });
 

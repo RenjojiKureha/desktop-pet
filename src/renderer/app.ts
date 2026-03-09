@@ -1,6 +1,6 @@
 import { createApp, ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import './styles.css';
-import type { AppConfig, PetState } from '../shared/types';
+import type { AppConfig, MessageType, PetState } from '../shared/types';
 import {
   clampEnergy,
   updateMood,
@@ -250,7 +250,7 @@ const vueApp = createApp({
       mood.value = updateMood(energy.value, config.value.thresholds, config.value.moods);
     }
 
-    function showRandomMessage(type: 'click' | 'idle' | 'moving' | 'lowEnergy' | 'all') {
+    function showRandomMessage(type: MessageType) {
       const pool = getMessagePool(type, config.value.messages);
       if (pool.length === 0) return;
       message.value = pickRandom(pool) ?? '';
@@ -298,7 +298,11 @@ const vueApp = createApp({
     }
 
     function closeApp() {
-      doSaveState();
+      try {
+        doSaveState();
+      } catch {
+        // Ignore save errors during close
+      }
       api.closeApp();
     }
 
@@ -940,6 +944,20 @@ const vueApp = createApp({
       // Sync state to main process for tray menu
       api.notifyChimeState(config.value.clock.enableChime);
       api.notifySoundState(soundEnabled.value);
+
+      // Backup: native click listener for close button
+      // (in case Vue template binding doesn't work on transparent window)
+      const closeBtn = document.querySelector('.close-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          try {
+            doSaveState();
+          } catch {
+            /* ignore */
+          }
+          api.closeApp();
+        });
+      }
     });
 
     onBeforeUnmount(() => {
