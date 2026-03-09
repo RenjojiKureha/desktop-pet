@@ -6,6 +6,7 @@ import {
   updateMood,
   pickRandom,
   getMessagePool,
+  getChatButtonLabel,
   buildPetClass,
   resolvePetEmoji,
   calculateMovePosition,
@@ -112,6 +113,8 @@ const vueApp = createApp({
       })
     );
 
+    const chatLabel = computed(() => getChatButtonLabel(energy.value, config.value.thresholds));
+
     // ---- Methods ----
 
     async function loadConfig() {
@@ -210,6 +213,11 @@ const vueApp = createApp({
       doUpdateMood();
       doSaveState();
       showRandomMessage('click');
+    }
+
+    function chatClick() {
+      playAnimation('jumping');
+      showRandomMessage('chat');
     }
 
     function petHover() {
@@ -471,7 +479,9 @@ const vueApp = createApp({
       moveDirection,
       petEmoji,
       petClass,
+      chatLabel,
       petClick,
+      chatClick,
       petHover,
       handleMouseEnter,
       handleMouseLeave,

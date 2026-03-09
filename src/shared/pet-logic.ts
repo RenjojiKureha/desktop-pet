@@ -31,7 +31,16 @@ export function getMessagePool(type: MessageType, messages: Messages): string[] 
   if (type === 'all') {
     return [...messages.click, ...messages.idle, ...messages.moving];
   }
+  if (type === 'chat') {
+    return messages.click;
+  }
   return messages[type] ?? [];
+}
+
+/** Return the chat button label based on energy level. */
+export function getChatButtonLabel(energy: number, thresholds: Thresholds): string {
+  if (energy <= thresholds.tiredMood) return '💤';
+  return '💬';
 }
 
 /** Build the CSS class string for the pet element. */

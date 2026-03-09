@@ -58,7 +58,7 @@ export interface Messages {
   moving: string[];
 }
 
-export type MessageType = keyof Messages | 'all';
+export type MessageType = keyof Messages | 'all' | 'chat';
 
 // ---- Moods ----
 export interface Moods {

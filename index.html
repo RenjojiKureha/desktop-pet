@@ -12,6 +12,7 @@
 
     <div id="app">
       <div class="pet-container" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
+        <div class="drag-handle" @click.prevent></div>
         <button class="close-btn" @click="closeApp">×</button>
         <div class="moving-indicator" :class="{ show: isAutoMoving }">{{ moveDirection }}</div>
         <div class="speech-bubble" :class="{ show: showMessage }">{{ message }}</div>
@@ -22,7 +23,7 @@
           <div class="status-item">❤️ {{ mood }}</div>
           <div class="status-item">⚡ {{ energy }}%</div>
         </div>
-        <div class="drag-handle" @click.prevent></div>
+        <button class="chat-btn" @click="chatClick">{{ chatLabel }}</button>
       </div>
     </div>
 

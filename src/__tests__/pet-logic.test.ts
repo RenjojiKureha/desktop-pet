@@ -4,6 +4,7 @@ import {
   updateMood,
   pickRandom,
   getMessagePool,
+  getChatButtonLabel,
   buildPetClass,
   resolvePetEmoji,
   calculateMovePosition,
@@ -112,6 +113,31 @@ describe('getMessagePool', () => {
   it('"all" returns merged click+idle+moving pool', () => {
     const pool = getMessagePool('all', messages);
     expect(pool).toEqual(['click1', 'click2', 'idle1', 'move1']);
+  });
+
+  it('"chat" returns click pool (reuses click messages)', () => {
+    expect(getMessagePool('chat', messages)).toEqual(['click1', 'click2']);
+  });
+});
+
+// ---------- getChatButtonLabel ----------
+describe('getChatButtonLabel', () => {
+  const thresholds: Thresholds = { tiredMood: 30, noAutoMove: 10, canAutoMove: 20 };
+
+  it('returns 💬 when energy > canAutoMove', () => {
+    expect(getChatButtonLabel(80, thresholds)).toBe('💬');
+  });
+
+  it('returns 💤 when energy <= tiredMood', () => {
+    expect(getChatButtonLabel(20, thresholds)).toBe('💤');
+  });
+
+  it('returns 💤 at tiredMood boundary', () => {
+    expect(getChatButtonLabel(30, thresholds)).toBe('💤');
+  });
+
+  it('returns 💬 for middle state (between tiredMood and canAutoMove)', () => {
+    expect(getChatButtonLabel(31, thresholds)).toBe('💬');
   });
 });
 
