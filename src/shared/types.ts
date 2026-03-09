@@ -101,6 +101,9 @@ export interface PetState {
 // ---- Serialized state (for disk) ----
 export type SerializedState = PetState;
 
+// ---- Pet display (emoji vs image) ----
+export type PetDisplay = { type: 'emoji'; value: string } | { type: 'image'; src: string };
+
 // ---- buildPetClass options ----
 export interface BuildPetClassOpts {
   currentAnimation: string;

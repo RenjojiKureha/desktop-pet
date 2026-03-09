@@ -40,13 +40,19 @@ body {
   pointer-events: auto;
   z-index: 101;
   -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pet {
   font-size: 150px;
   cursor: pointer;
   filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -30px;
   pointer-events: auto;
   transition: filter 0.3s ease;
   position: relative;

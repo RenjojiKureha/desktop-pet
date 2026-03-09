@@ -8,7 +8,7 @@ import {
   getMessagePool,
   getChatButtonLabel,
   buildPetClass,
-  resolvePetEmoji,
+  resolvePetDisplay,
   calculateMovePosition,
   formatChimeMessage,
   getNextChimeDelay,
@@ -97,9 +97,23 @@ const vueApp = createApp({
     let animationPlaying = false;
 
     // ---- Computed ----
+    const petDisplay = computed(() =>
+      resolvePetDisplay(
+        config.value.skin,
+        currentSkin.value,
+        config.value.pet.emoji,
+        customImage.value
+      )
+    );
+
     const petEmoji = computed(() => {
-      if (customImage.value) return '';
-      return resolvePetEmoji(config.value.skin, currentSkin.value, config.value.pet.emoji);
+      const d = petDisplay.value;
+      return d.type === 'emoji' ? d.value : '';
+    });
+
+    const petImageSrc = computed(() => {
+      const d = petDisplay.value;
+      return d.type === 'image' ? d.src : '';
     });
 
     const petClass = computed(() =>
@@ -478,6 +492,7 @@ const vueApp = createApp({
       isAutoMoving,
       moveDirection,
       petEmoji,
+      petImageSrc,
       petClass,
       chatLabel,
       petClick,

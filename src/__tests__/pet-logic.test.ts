@@ -7,6 +7,7 @@ import {
   getChatButtonLabel,
   buildPetClass,
   resolvePetEmoji,
+  resolvePetDisplay,
   calculateMovePosition,
   formatChimeMessage,
   getNextChimeDelay,
@@ -318,5 +319,45 @@ describe('getNextChimeDelay', () => {
     const now = new Date(2026, 2, 7, 10, 0, 0, 0);
     const delay = getNextChimeDelay(now, [10, 11, 12]);
     expect(delay).toBe(60 * 60 * 1000);
+  });
+});
+
+// ---------- resolvePetDisplay ----------
+describe('resolvePetDisplay', () => {
+  const skinConfig: SkinConfig = {
+    enabled: true,
+    type: 'emoji',
+    customImage: '',
+    skins: [
+      { id: 'default', name: '默认', type: 'emoji', value: '🐟' },
+      { id: 'nemo', name: '尼莫', type: 'emoji', value: '🐠' },
+    ],
+    currentSkin: 'default',
+  };
+
+  it('returns image display when customImage is set', () => {
+    const result = resolvePetDisplay(skinConfig, 'default', '🐟', 'data:image/png;base64,abc');
+    expect(result).toEqual({ type: 'image', src: 'data:image/png;base64,abc' });
+  });
+
+  it('returns emoji display when customImage is empty', () => {
+    const result = resolvePetDisplay(skinConfig, 'nemo', '🐟', '');
+    expect(result).toEqual({ type: 'emoji', value: '🐠' });
+  });
+
+  it('returns default emoji when skin is disabled and no custom image', () => {
+    const disabled = { ...skinConfig, enabled: false };
+    const result = resolvePetDisplay(disabled, 'nemo', '🦞', '');
+    expect(result).toEqual({ type: 'emoji', value: '🦞' });
+  });
+
+  it('custom image takes priority over emoji skin', () => {
+    const result = resolvePetDisplay(skinConfig, 'nemo', '🐟', 'data:image/jpeg;base64,xyz');
+    expect(result.type).toBe('image');
+  });
+
+  it('returns emoji when customImage is cleared after switching back', () => {
+    const result = resolvePetDisplay(skinConfig, 'default', '🐟', '');
+    expect(result).toEqual({ type: 'emoji', value: '🐟' });
   });
 });

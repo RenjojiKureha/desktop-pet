@@ -3,6 +3,7 @@ import type {
   Messages,
   MessageType,
   Moods,
+  PetDisplay,
   SkinConfig,
   Thresholds,
 } from './types';
@@ -79,6 +80,19 @@ export function resolvePetEmoji(
   if (!skinConfig.enabled) return defaultEmoji;
   const skin = skinConfig.skins.find(s => s.id === currentSkin);
   return skin?.value ?? defaultEmoji;
+}
+
+/** Resolve what to display: either a custom image or an emoji. */
+export function resolvePetDisplay(
+  skinConfig: SkinConfig,
+  currentSkin: string,
+  defaultEmoji: string,
+  customImage: string
+): PetDisplay {
+  if (customImage) {
+    return { type: 'image', src: customImage };
+  }
+  return { type: 'emoji', value: resolvePetEmoji(skinConfig, currentSkin, defaultEmoji) };
 }
 
 /** Calculate new X position after auto-move. */

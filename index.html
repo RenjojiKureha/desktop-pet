@@ -17,7 +17,8 @@
         <div class="moving-indicator" :class="{ show: isAutoMoving }">{{ moveDirection }}</div>
         <div class="speech-bubble" :class="{ show: showMessage }">{{ message }}</div>
         <div class="pet" :class="petClass" @click="petClick" @mouseenter="petHover">
-          {{ petEmoji }}
+          <img v-if="petImageSrc" :src="petImageSrc" class="custom-pet-image" alt="pet" />
+          <template v-else>{{ petEmoji }}</template>
         </div>
         <div class="status-bar">
           <div class="status-item">❤️ {{ mood }}</div>
