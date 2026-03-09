@@ -287,26 +287,28 @@ body {
   background: rgba(255, 255, 255, 0.8);
   border-radius: 8px 0 8px 0;
   cursor: move;
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
   z-index: 102;
   transition:
     background 0.2s,
-    opacity 0.2s;
+    opacity 0.2s,
+    transform 0.2s;
   opacity: 0;
 }
 
-.pet-container:hover .drag-handle {
+.drag-handle.visible {
   opacity: 1;
+}
+
+.drag-handle:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
 }
 
 .drag-handle::before {
   content: '⠿';
   font-size: 16px;
   color: #666;
-}
-
-.drag-handle:hover {
-  background: rgba(255, 255, 255, 1);
 }
 
 .close-btn {

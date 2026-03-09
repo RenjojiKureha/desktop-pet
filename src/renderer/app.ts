@@ -258,6 +258,29 @@ const vueApp = createApp({
       api.closeApp();
     }
 
+    // ---- JS-based drag (replaces -webkit-app-region: drag on handle) ----
+    let dragStart = { mouseX: 0, mouseY: 0, winX: 0, winY: 0 };
+
+    function onDragMove(e: MouseEvent) {
+      api.moveWindow(
+        dragStart.winX + e.screenX - dragStart.mouseX,
+        dragStart.winY + e.screenY - dragStart.mouseY
+      );
+    }
+
+    function onDragEnd() {
+      document.removeEventListener('mousemove', onDragMove);
+      document.removeEventListener('mouseup', onDragEnd);
+    }
+
+    async function dragHandleMouseDown(e: MouseEvent) {
+      e.preventDefault();
+      const pos = await api.getWindowPosition();
+      dragStart = { mouseX: e.screenX, mouseY: e.screenY, winX: pos.x, winY: pos.y };
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', onDragEnd);
+    }
+
     // ---- Auto-move (fixes bug #7: uses setTimeout consistently) ----
 
     function startAutoMove() {
@@ -489,6 +512,7 @@ const vueApp = createApp({
       showMessage,
       energy,
       mood,
+      isHovering,
       isAutoMoving,
       moveDirection,
       petEmoji,
@@ -501,6 +525,7 @@ const vueApp = createApp({
       handleMouseEnter,
       handleMouseLeave,
       closeApp,
+      dragHandleMouseDown,
     };
   },
 });

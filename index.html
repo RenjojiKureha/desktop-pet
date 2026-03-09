@@ -12,7 +12,11 @@
 
     <div id="app">
       <div class="pet-container" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
-        <div class="drag-handle" @click.prevent></div>
+        <div
+          class="drag-handle"
+          :class="{ visible: isHovering }"
+          @mousedown="dragHandleMouseDown"
+        ></div>
         <button class="close-btn" @click="closeApp">×</button>
         <div class="moving-indicator" :class="{ show: isAutoMoving }">{{ moveDirection }}</div>
         <div class="speech-bubble" :class="{ show: showMessage }">{{ message }}</div>
