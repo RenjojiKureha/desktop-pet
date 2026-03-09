@@ -398,3 +398,121 @@ body {
 .chat-btn:active {
   transform: translateX(-50%) scale(0.95);
 }
+
+/* ========== 倒计时显示 ========== */
+
+.countdown-badge {
+  position: absolute;
+  top: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: white;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 8px rgba(238, 90, 36, 0.4);
+  z-index: 170;
+  pointer-events: none;
+  animation: countdownPulse 2s ease-in-out infinite;
+  white-space: nowrap;
+}
+
+@keyframes countdownPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* ========== 输入对话框 ========== */
+
+.prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  -webkit-app-region: no-drag;
+}
+
+.prompt-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  width: 250px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.prompt-title {
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.prompt-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.prompt-input:focus {
+  border-color: #4a9eff;
+}
+
+.prompt-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.prompt-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.1s;
+}
+
+.prompt-btn:active {
+  transform: scale(0.95);
+}
+
+.prompt-btn-cancel {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.prompt-btn-cancel:hover {
+  background: #e0e0e0;
+}
+
+.prompt-btn-ok {
+  background: #4a9eff;
+  color: white;
+}
+
+.prompt-btn-ok:hover {
+  background: #3a8eef;
+}

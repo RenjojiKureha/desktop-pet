@@ -69,6 +69,8 @@ export interface Moods {
 }
 
 // ---- Clock ----
+export type ChimePreset = 'work' | 'daytime' | 'allday';
+
 export interface ClockConfig {
   enableChime: boolean;
   chimeHours: number[];
@@ -95,6 +97,12 @@ export interface PetState {
   mood: string;
   currentSkin: string;
   customImage: string;
+  chimeEnabled: boolean;
+  chimeHours: number[];
+  chimeMessage: string;
+  soundEnabled: boolean;
+  soundPreset: string;
+  customSound: string;
   timestamp: number;
 }
 

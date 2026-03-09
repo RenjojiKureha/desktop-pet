@@ -36,6 +36,50 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('save-on-exit', () => cb());
   },
 
+  // Chime controls
+  onToggleChime: (cb: () => void) => {
+    ipcRenderer.on('toggle-chime', () => cb());
+  },
+  onSetChimeHours: (cb: (preset: string) => void) => {
+    ipcRenderer.on('set-chime-hours', (_e, preset: string) => cb(preset));
+  },
+  onSetChimeMessage: (cb: (msg: string) => void) => {
+    ipcRenderer.on('set-chime-message', (_e, msg: string) => cb(msg));
+  },
+  onPromptChimeHours: (cb: () => void) => {
+    ipcRenderer.on('prompt-chime-hours', () => cb());
+  },
+  onPromptChimeMessage: (cb: () => void) => {
+    ipcRenderer.on('prompt-chime-message', () => cb());
+  },
+
+  // Countdown controls
+  onStartCountdown: (cb: (minutes: number) => void) => {
+    ipcRenderer.on('start-countdown', (_e, minutes: number) => cb(minutes));
+  },
+  onCancelCountdown: (cb: () => void) => {
+    ipcRenderer.on('cancel-countdown', () => cb());
+  },
+  onPromptCountdown: (cb: () => void) => {
+    ipcRenderer.on('prompt-countdown', () => cb());
+  },
+
+  // Notify main of countdown/chime/sound state for menu updates
+  notifyCountdownState: (active: boolean) => ipcRenderer.send('countdown-state', active),
+  notifyChimeState: (enabled: boolean) => ipcRenderer.send('chime-state', enabled),
+  notifySoundState: (enabled: boolean) => ipcRenderer.send('sound-state', enabled),
+
+  // Sound controls
+  onToggleSound: (cb: () => void) => {
+    ipcRenderer.on('toggle-sound', () => cb());
+  },
+  onSetSoundPreset: (cb: (preset: string) => void) => {
+    ipcRenderer.on('set-sound-preset', (_e, preset: string) => cb(preset));
+  },
+  onLoadCustomSound: (cb: () => void) => {
+    ipcRenderer.on('load-custom-sound', () => cb());
+  },
+
   // Signal that save-on-exit is complete
   notifySaveComplete: () => ipcRenderer.send('save-on-exit-done'),
 

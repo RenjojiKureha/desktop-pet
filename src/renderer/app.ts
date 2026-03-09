@@ -12,6 +12,10 @@ import {
   calculateMovePosition,
   formatChimeMessage,
   getNextChimeDelay,
+  getChimePresetHours,
+  parseCountdownInput,
+  formatCountdownDisplay,
+  parseCustomHoursInput,
 } from '../shared/pet-logic';
 import { serializeState, deserializeState } from '../shared/state';
 import { getAnimationDuration } from '../shared/config';
@@ -67,6 +71,12 @@ const DEFAULT_STATE: PetState = {
   mood: '开心',
   currentSkin: 'default',
   customImage: '',
+  chimeEnabled: true,
+  chimeHours: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+  chimeMessage: '',
+  soundEnabled: true,
+  soundPreset: 'dingdong',
+  customSound: '',
   timestamp: 0,
 };
 
@@ -92,9 +102,27 @@ const vueApp = createApp({
     let autoMoveTimeout: ReturnType<typeof setTimeout> | null = null;
     let animationTimeout: ReturnType<typeof setTimeout> | null = null;
     let chimeTimeout: ReturnType<typeof setTimeout> | null = null;
+    let countdownTimeout: ReturnType<typeof setTimeout> | null = null;
+    let countdownInterval: ReturnType<typeof setInterval> | null = null;
     // Queue for sequential animations (fixes bug #5)
     let animationQueue: string[] = [];
     let animationPlaying = false;
+
+    // ---- Countdown state ----
+    const countdownEndTime = ref<number | null>(null);
+    const countdownDisplay = ref('');
+
+    // ---- Sound state ----
+    const soundEnabled = ref(true);
+    const soundPreset = ref('dingdong');
+    const customSound = ref('');
+
+    // ---- Prompt dialog state ----
+    const promptVisible = ref(false);
+    const promptTitle = ref('');
+    const promptPlaceholder = ref('');
+    const promptValue = ref('');
+    let promptResolve: ((value: string | null) => void) | null = null;
 
     // ---- Computed ----
     const petDisplay = computed(() =>
@@ -149,6 +177,16 @@ const vueApp = createApp({
         mood.value = state.mood;
         currentSkin.value = state.currentSkin;
         customImage.value = state.customImage;
+        // Restore chime settings into runtime config
+        config.value.clock.enableChime = state.chimeEnabled;
+        config.value.clock.chimeHours = state.chimeHours;
+        if (state.chimeMessage) {
+          config.value.clock.chimeMessage = state.chimeMessage;
+        }
+        // Restore sound settings
+        soundEnabled.value = state.soundEnabled;
+        soundPreset.value = state.soundPreset;
+        customSound.value = state.customSound;
       } catch {
         // Use defaults
       }
@@ -160,6 +198,12 @@ const vueApp = createApp({
         mood: mood.value,
         currentSkin: currentSkin.value,
         customImage: customImage.value,
+        chimeEnabled: config.value.clock.enableChime,
+        chimeHours: config.value.clock.chimeHours,
+        chimeMessage: config.value.clock.chimeMessage,
+        soundEnabled: soundEnabled.value,
+        soundPreset: soundPreset.value,
+        customSound: customSound.value,
         timestamp: Date.now(),
       });
       api.saveState(state);
@@ -374,6 +418,14 @@ const vueApp = createApp({
         clearTimeout(chimeTimeout);
         chimeTimeout = null;
       }
+      if (countdownTimeout) {
+        clearTimeout(countdownTimeout);
+        countdownTimeout = null;
+      }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
       animationQueue = [];
       animationPlaying = false;
     }
@@ -406,9 +458,249 @@ const vueApp = createApp({
       message.value = formatChimeMessage(template, hour, action);
       showMessage.value = true;
       playAnimation('happy');
+      playAlertSound();
       setTimeout(() => {
         showMessage.value = false;
       }, 4000);
+    }
+
+    // ---- Chime controls ----
+
+    function toggleChime() {
+      config.value.clock.enableChime = !config.value.clock.enableChime;
+      if (config.value.clock.enableChime) {
+        startClock();
+        message.value = '报时已开启';
+      } else {
+        if (chimeTimeout) {
+          clearTimeout(chimeTimeout);
+          chimeTimeout = null;
+        }
+        message.value = '报时已关闭';
+      }
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 2000);
+      api.notifyChimeState(config.value.clock.enableChime);
+      doSaveState();
+    }
+
+    function setChimeHours(preset: string) {
+      const hours = getChimePresetHours(preset);
+      if (hours.length === 0) return;
+      config.value.clock.chimeHours = hours;
+      // Restart clock with new hours
+      if (chimeTimeout) {
+        clearTimeout(chimeTimeout);
+        chimeTimeout = null;
+      }
+      if (config.value.clock.enableChime) {
+        startClock();
+      }
+      const labels: Record<string, string> = {
+        work: '工作时间 (9-18点)',
+        daytime: '白天 (8-22点)',
+        allday: '全天整点',
+      };
+      message.value = `报时时段: ${labels[preset] ?? preset}`;
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 2000);
+      doSaveState();
+    }
+
+    function setChimeMessage(msg: string) {
+      config.value.clock.chimeMessage = msg || '现在是 {hour} 点啦！{action}';
+      message.value = msg ? '报时消息已更新' : '已恢复默认消息';
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 2000);
+      doSaveState();
+    }
+
+    // ---- Countdown ----
+
+    function startCountdown(minutes: number) {
+      // Clear any existing countdown
+      cancelCountdown();
+
+      const durationMs = minutes * 60 * 1000;
+      countdownEndTime.value = Date.now() + durationMs;
+      api.notifyCountdownState(true);
+
+      message.value = `倒计时 ${minutes} 分钟开始！`;
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 2000);
+
+      // Update display every second
+      countdownInterval = setInterval(() => {
+        if (countdownEndTime.value === null) return;
+        const remaining = countdownEndTime.value - Date.now();
+        if (remaining <= 0) {
+          countdownFinished();
+        } else {
+          countdownDisplay.value = formatCountdownDisplay(remaining);
+        }
+      }, 1000);
+
+      // Set exact timeout for completion
+      countdownTimeout = setTimeout(() => {
+        countdownFinished();
+      }, durationMs);
+    }
+
+    function countdownFinished() {
+      countdownEndTime.value = null;
+      countdownDisplay.value = '';
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      if (countdownTimeout) {
+        clearTimeout(countdownTimeout);
+        countdownTimeout = null;
+      }
+      api.notifyCountdownState(false);
+
+      // Show alert
+      message.value = '倒计时结束！';
+      showMessage.value = true;
+      playAnimation('jumping');
+      playAnimation('happy');
+      playAlertSound();
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 5000);
+    }
+
+    function cancelCountdown() {
+      if (countdownEndTime.value === null) return;
+      countdownEndTime.value = null;
+      countdownDisplay.value = '';
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      if (countdownTimeout) {
+        clearTimeout(countdownTimeout);
+        countdownTimeout = null;
+      }
+      api.notifyCountdownState(false);
+
+      message.value = '倒计时已取消';
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 2000);
+    }
+
+    // ---- In-app prompt dialog ----
+
+    function showPrompt(title: string, placeholder: string): Promise<string | null> {
+      return new Promise(resolve => {
+        promptTitle.value = title;
+        promptPlaceholder.value = placeholder;
+        promptValue.value = '';
+        promptVisible.value = true;
+        promptResolve = resolve;
+        // Focus the input on next tick
+        setTimeout(() => {
+          const el = document.querySelector('.prompt-input') as HTMLInputElement;
+          el?.focus();
+        }, 50);
+      });
+    }
+
+    function promptConfirm() {
+      const value = promptValue.value;
+      promptVisible.value = false;
+      if (promptResolve) {
+        promptResolve(value);
+        promptResolve = null;
+      }
+    }
+
+    function promptCancel() {
+      promptVisible.value = false;
+      if (promptResolve) {
+        promptResolve(null);
+        promptResolve = null;
+      }
+    }
+
+    // ---- Sound playback (Web Audio API) ----
+
+    let audioContext: AudioContext | null = null;
+
+    function getAudioContext(): AudioContext {
+      if (!audioContext) {
+        audioContext = new AudioContext();
+      }
+      return audioContext;
+    }
+
+    function playPresetSound(preset: string) {
+      const ctx = getAudioContext();
+      switch (preset) {
+        case 'dingdong': {
+          // Two-tone chime: C5 then E5
+          playTone(ctx, 523, 0.2, 0);
+          playTone(ctx, 659, 0.3, 0.2);
+          break;
+        }
+        case 'beep': {
+          // Two short beeps
+          playTone(ctx, 800, 0.1, 0);
+          playTone(ctx, 800, 0.1, 0.15);
+          break;
+        }
+        case 'bell': {
+          // Higher pitched bell ring
+          playTone(ctx, 1047, 0.4, 0);
+          break;
+        }
+        case 'notification': {
+          // Ascending three-tone
+          playTone(ctx, 523, 0.12, 0);
+          playTone(ctx, 659, 0.12, 0.12);
+          playTone(ctx, 784, 0.2, 0.24);
+          break;
+        }
+      }
+    }
+
+    function playTone(ctx: AudioContext, freq: number, duration: number, delay: number) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      const startTime = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    function playCustomSound(dataUrl: string) {
+      const audio = new Audio(dataUrl);
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    }
+
+    function playAlertSound() {
+      if (!soundEnabled.value) return;
+      if (customSound.value) {
+        playCustomSound(customSound.value);
+      } else {
+        playPresetSound(soundPreset.value);
+      }
     }
 
     // ---- IPC listeners ----
@@ -470,6 +762,140 @@ const vueApp = createApp({
         // Notify main process that save is complete (fixes bug #8)
         api.notifySaveComplete();
       });
+
+      // ---- Chime IPC ----
+      api.onToggleChime(() => {
+        toggleChime();
+      });
+
+      api.onSetChimeHours((preset: string) => {
+        setChimeHours(preset);
+      });
+
+      api.onSetChimeMessage((msg: string) => {
+        setChimeMessage(msg);
+      });
+
+      api.onPromptChimeHours(async () => {
+        const input = await showPrompt(
+          '请输入报时小时数，用逗号分隔（0-23）\n例如: 9,12,15,18',
+          '9,12,15,18'
+        );
+        if (input === null) return;
+        const hours = parseCustomHoursInput(input);
+        if (hours === null) {
+          message.value = '输入无效，请使用逗号分隔的小时数';
+          showMessage.value = true;
+          setTimeout(() => {
+            showMessage.value = false;
+          }, 2000);
+          return;
+        }
+        config.value.clock.chimeHours = hours;
+        if (chimeTimeout) {
+          clearTimeout(chimeTimeout);
+          chimeTimeout = null;
+        }
+        if (config.value.clock.enableChime) {
+          startClock();
+        }
+        message.value = `报时时段已设置: ${hours.join(', ')}点`;
+        showMessage.value = true;
+        setTimeout(() => {
+          showMessage.value = false;
+        }, 2000);
+        doSaveState();
+      });
+
+      api.onPromptChimeMessage(async () => {
+        const input = await showPrompt(
+          '请输入自定义报时消息\n可用变量: {hour} {period} {action}\n留空恢复默认',
+          '现在是 {hour} 点啦！{action}'
+        );
+        if (input === null) return;
+        setChimeMessage(input);
+      });
+
+      // ---- Countdown IPC ----
+      api.onStartCountdown((minutes: number) => {
+        startCountdown(minutes);
+      });
+
+      api.onCancelCountdown(() => {
+        cancelCountdown();
+      });
+
+      api.onPromptCountdown(async () => {
+        const input = await showPrompt('请输入倒计时分钟数（1-120）', '25');
+        if (input === null) return;
+        const minutes = parseCountdownInput(input);
+        if (minutes === null) {
+          message.value = '输入无效，请输入1-120之间的数字';
+          showMessage.value = true;
+          setTimeout(() => {
+            showMessage.value = false;
+          }, 2000);
+          return;
+        }
+        startCountdown(minutes);
+      });
+
+      // ---- Sound IPC ----
+      api.onToggleSound(() => {
+        soundEnabled.value = !soundEnabled.value;
+        message.value = soundEnabled.value ? '音效已开启' : '音效已关闭';
+        showMessage.value = true;
+        setTimeout(() => {
+          showMessage.value = false;
+        }, 2000);
+        api.notifySoundState(soundEnabled.value);
+        doSaveState();
+      });
+
+      api.onSetSoundPreset((preset: string) => {
+        soundPreset.value = preset;
+        customSound.value = '';
+        const names: Record<string, string> = {
+          dingdong: '叮咚',
+          beep: '滴滴',
+          bell: '铃声',
+          notification: '提示音',
+        };
+        message.value = `音效: ${names[preset] ?? preset}`;
+        showMessage.value = true;
+        setTimeout(() => {
+          showMessage.value = false;
+        }, 2000);
+        // Preview the sound
+        if (soundEnabled.value) playPresetSound(preset);
+        doSaveState();
+      });
+
+      api.onLoadCustomSound(() => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'audio/*';
+        input.onchange = (e: Event) => {
+          const target = e.target as HTMLInputElement;
+          const file = target.files?.[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = evt => {
+              customSound.value = (evt.target as FileReader).result as string;
+              message.value = '自定义音效已加载！';
+              showMessage.value = true;
+              setTimeout(() => {
+                showMessage.value = false;
+              }, 2000);
+              // Preview the sound
+              if (soundEnabled.value) playCustomSound(customSound.value);
+              doSaveState();
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+        input.click();
+      });
     }
 
     function cleanupIpcListeners() {
@@ -479,6 +905,17 @@ const vueApp = createApp({
         'refresh-state',
         'show-info',
         'save-on-exit',
+        'toggle-chime',
+        'set-chime-hours',
+        'set-chime-message',
+        'prompt-chime-hours',
+        'prompt-chime-message',
+        'start-countdown',
+        'cancel-countdown',
+        'prompt-countdown',
+        'toggle-sound',
+        'set-sound-preset',
+        'load-custom-sound',
       ];
       channels.forEach(ch => api.removeAllListeners(ch));
     }
@@ -500,6 +937,9 @@ const vueApp = createApp({
       startTimers();
       setupContextMenu();
       startClock();
+      // Sync state to main process for tray menu
+      api.notifyChimeState(config.value.clock.enableChime);
+      api.notifySoundState(soundEnabled.value);
     });
 
     onBeforeUnmount(() => {
@@ -519,6 +959,13 @@ const vueApp = createApp({
       petImageSrc,
       petClass,
       chatLabel,
+      countdownDisplay,
+      promptVisible,
+      promptTitle,
+      promptPlaceholder,
+      promptValue,
+      promptConfirm,
+      promptCancel,
       petClick,
       chatClick,
       petHover,

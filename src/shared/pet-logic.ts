@@ -139,3 +139,54 @@ export function getNextChimeDelay(now: Date, chimeHours: number[]): number | nul
   const msInDay = 24 * 3600000;
   return msInDay - currentMs + firstChimeMs;
 }
+
+/** Return hour array for a chime preset name. */
+export function getChimePresetHours(preset: string): number[] {
+  switch (preset) {
+    case 'work':
+      return [9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+    case 'daytime':
+      return [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+    case 'allday':
+      return Array.from({ length: 24 }, (_, i) => i);
+    default:
+      return [];
+  }
+}
+
+/** Parse user input for countdown minutes. Returns null for invalid input. */
+export function parseCountdownInput(input: string): number | null {
+  if (!input) return null;
+  const n = Number(input);
+  if (!Number.isFinite(n) || n <= 0 || n > 120) return null;
+  return n;
+}
+
+/** Format remaining milliseconds as m:ss display string. */
+export function formatCountdownDisplay(remainingMs: number): string {
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+/** Return the list of available sound presets. */
+export function getSoundPresetList(): { id: string; name: string }[] {
+  return [
+    { id: 'dingdong', name: '叮咚' },
+    { id: 'beep', name: '滴滴' },
+    { id: 'bell', name: '铃声' },
+    { id: 'notification', name: '提示音' },
+  ];
+}
+
+/** Parse comma-separated hours input string. Returns sorted unique valid hours, or null. */
+export function parseCustomHoursInput(input: string): number[] | null {
+  if (!input) return null;
+  const hours = input
+    .split(',')
+    .map(s => parseInt(s.trim(), 10))
+    .filter(n => Number.isFinite(n) && n >= 0 && n <= 23);
+  if (hours.length === 0) return null;
+  return [...new Set(hours)].sort((a, b) => a - b);
+}

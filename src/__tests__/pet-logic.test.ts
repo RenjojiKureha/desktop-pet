@@ -11,6 +11,11 @@ import {
   calculateMovePosition,
   formatChimeMessage,
   getNextChimeDelay,
+  getChimePresetHours,
+  parseCountdownInput,
+  formatCountdownDisplay,
+  getSoundPresetList,
+  parseCustomHoursInput,
 } from '../shared/pet-logic';
 import type { Messages, Moods, SkinConfig, Thresholds } from '../shared/types';
 
@@ -359,5 +364,140 @@ describe('resolvePetDisplay', () => {
   it('returns emoji when customImage is cleared after switching back', () => {
     const result = resolvePetDisplay(skinConfig, 'default', '🐟', '');
     expect(result).toEqual({ type: 'emoji', value: '🐟' });
+  });
+});
+
+// ---------- getChimePresetHours ----------
+describe('getChimePresetHours', () => {
+  it("'work' returns hours 9-18", () => {
+    expect(getChimePresetHours('work')).toEqual([9, 10, 11, 12, 13, 14, 15, 16, 17, 18]);
+  });
+
+  it("'daytime' returns hours 8-22", () => {
+    expect(getChimePresetHours('daytime')).toEqual([
+      8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+    ]);
+  });
+
+  it("'allday' returns hours 0-23", () => {
+    const expected = Array.from({ length: 24 }, (_, i) => i);
+    expect(getChimePresetHours('allday')).toEqual(expected);
+  });
+
+  it('unknown preset returns empty array', () => {
+    expect(getChimePresetHours('unknown')).toEqual([]);
+  });
+});
+
+// ---------- parseCountdownInput ----------
+describe('parseCountdownInput', () => {
+  it("parses '10' as 10", () => {
+    expect(parseCountdownInput('10')).toBe(10);
+  });
+
+  it("parses '1' as 1", () => {
+    expect(parseCountdownInput('1')).toBe(1);
+  });
+
+  it("returns null for 'abc'", () => {
+    expect(parseCountdownInput('abc')).toBeNull();
+  });
+
+  it("returns null for '0'", () => {
+    expect(parseCountdownInput('0')).toBeNull();
+  });
+
+  it('returns null for negative number', () => {
+    expect(parseCountdownInput('-5')).toBeNull();
+  });
+
+  it('returns null for empty string', () => {
+    expect(parseCountdownInput('')).toBeNull();
+  });
+
+  it('returns null for values exceeding 120', () => {
+    expect(parseCountdownInput('121')).toBeNull();
+  });
+
+  it("parses '120' as 120 (upper bound)", () => {
+    expect(parseCountdownInput('120')).toBe(120);
+  });
+});
+
+// ---------- formatCountdownDisplay ----------
+describe('formatCountdownDisplay', () => {
+  it('formats 90000ms as 1:30', () => {
+    expect(formatCountdownDisplay(90000)).toBe('1:30');
+  });
+
+  it('formats 60000ms as 1:00', () => {
+    expect(formatCountdownDisplay(60000)).toBe('1:00');
+  });
+
+  it('formats 5000ms as 0:05', () => {
+    expect(formatCountdownDisplay(5000)).toBe('0:05');
+  });
+
+  it('formats 0ms as 0:00', () => {
+    expect(formatCountdownDisplay(0)).toBe('0:00');
+  });
+
+  it('formats 3599000ms as 59:59', () => {
+    expect(formatCountdownDisplay(3599000)).toBe('59:59');
+  });
+});
+
+// ---------- getSoundPresetList ----------
+describe('getSoundPresetList', () => {
+  it('returns a non-empty array', () => {
+    const presets = getSoundPresetList();
+    expect(presets.length).toBeGreaterThan(0);
+  });
+
+  it('each preset has id and name', () => {
+    const presets = getSoundPresetList();
+    presets.forEach(p => {
+      expect(typeof p.id).toBe('string');
+      expect(p.id.length).toBeGreaterThan(0);
+      expect(typeof p.name).toBe('string');
+      expect(p.name.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('preset ids are unique', () => {
+    const presets = getSoundPresetList();
+    const ids = presets.map(p => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+// ---------- parseCustomHoursInput ----------
+describe('parseCustomHoursInput', () => {
+  it('parses comma-separated hours', () => {
+    expect(parseCustomHoursInput('9,12,15,18')).toEqual([9, 12, 15, 18]);
+  });
+
+  it('filters non-numeric values', () => {
+    expect(parseCustomHoursInput('9,abc,15')).toEqual([9, 15]);
+  });
+
+  it('filters out-of-range values (>23 or <0)', () => {
+    expect(parseCustomHoursInput('9,25,-1,18')).toEqual([9, 18]);
+  });
+
+  it('returns sorted unique values', () => {
+    expect(parseCustomHoursInput('18,9,9,12')).toEqual([9, 12, 18]);
+  });
+
+  it('returns null for completely invalid input', () => {
+    expect(parseCustomHoursInput('abc,def')).toBeNull();
+  });
+
+  it('returns null for empty string', () => {
+    expect(parseCustomHoursInput('')).toBeNull();
+  });
+
+  it('handles spaces around numbers', () => {
+    expect(parseCustomHoursInput(' 9 , 12 , 18 ')).toEqual([9, 12, 18]);
   });
 });

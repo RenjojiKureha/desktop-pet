@@ -7,6 +7,12 @@ export function serializeState(state: PetState): SerializedState {
     mood: state.mood,
     currentSkin: state.currentSkin,
     customImage: state.customImage,
+    chimeEnabled: state.chimeEnabled,
+    chimeHours: state.chimeHours,
+    chimeMessage: state.chimeMessage,
+    soundEnabled: state.soundEnabled,
+    soundPreset: state.soundPreset,
+    customSound: state.customSound,
     timestamp: state.timestamp,
   };
 }
@@ -21,6 +27,12 @@ export function deserializeState(data: unknown, defaults: PetState): PetState {
     mood: typeof raw.mood === 'string' ? raw.mood : defaults.mood,
     currentSkin: typeof raw.currentSkin === 'string' ? raw.currentSkin : defaults.currentSkin,
     customImage: typeof raw.customImage === 'string' ? raw.customImage : defaults.customImage,
+    chimeEnabled: typeof raw.chimeEnabled === 'boolean' ? raw.chimeEnabled : defaults.chimeEnabled,
+    chimeHours: Array.isArray(raw.chimeHours) ? raw.chimeHours : defaults.chimeHours,
+    chimeMessage: typeof raw.chimeMessage === 'string' ? raw.chimeMessage : defaults.chimeMessage,
+    soundEnabled: typeof raw.soundEnabled === 'boolean' ? raw.soundEnabled : defaults.soundEnabled,
+    soundPreset: typeof raw.soundPreset === 'string' ? raw.soundPreset : defaults.soundPreset,
+    customSound: typeof raw.customSound === 'string' ? raw.customSound : defaults.customSound,
     timestamp: typeof raw.timestamp === 'number' ? raw.timestamp : defaults.timestamp,
   };
 }
@@ -35,6 +47,12 @@ export function validateState(state: unknown): state is PetState {
   if (typeof s.mood !== 'string') return false;
   if (typeof s.currentSkin !== 'string') return false;
   if (typeof s.customImage !== 'string') return false;
+  if (typeof s.chimeEnabled !== 'boolean') return false;
+  if (!Array.isArray(s.chimeHours)) return false;
+  if (typeof s.chimeMessage !== 'string') return false;
+  if (typeof s.soundEnabled !== 'boolean') return false;
+  if (typeof s.soundPreset !== 'string') return false;
+  if (typeof s.customSound !== 'string') return false;
   if (typeof s.timestamp !== 'number') return false;
 
   return true;

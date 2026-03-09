@@ -20,6 +20,7 @@
         <button class="close-btn" @click="closeApp">×</button>
         <div class="moving-indicator" :class="{ show: isAutoMoving }">{{ moveDirection }}</div>
         <div class="speech-bubble" :class="{ show: showMessage }">{{ message }}</div>
+        <div class="countdown-badge" v-if="countdownDisplay">{{ countdownDisplay }}</div>
         <div class="pet" :class="petClass" @click="petClick" @mouseenter="petHover">
           <img v-if="petImageSrc" :src="petImageSrc" class="custom-pet-image" alt="pet" />
           <template v-else>{{ petEmoji }}</template>
@@ -29,6 +30,24 @@
           <div class="status-item">⚡ {{ energy }}%</div>
         </div>
         <button class="chat-btn" @click="chatClick">{{ chatLabel }}</button>
+      </div>
+
+      <!-- 输入对话框 -->
+      <div class="prompt-overlay" v-if="promptVisible" @click.self="promptCancel">
+        <div class="prompt-dialog">
+          <div class="prompt-title">{{ promptTitle }}</div>
+          <input
+            class="prompt-input"
+            v-model="promptValue"
+            :placeholder="promptPlaceholder"
+            @keyup.enter="promptConfirm"
+            ref="promptInputRef"
+          />
+          <div class="prompt-buttons">
+            <button class="prompt-btn prompt-btn-cancel" @click="promptCancel">取消</button>
+            <button class="prompt-btn prompt-btn-ok" @click="promptConfirm">确定</button>
+          </div>
+        </div>
       </div>
     </div>
 
