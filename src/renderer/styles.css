@@ -27,6 +27,7 @@ body {
   height: 300px;
   pointer-events: auto;
   z-index: 101;
+  -webkit-app-region: no-drag;
   display: flex;
   align-items: center;
   justify-content: center;

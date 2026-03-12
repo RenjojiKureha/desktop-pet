@@ -104,6 +104,7 @@ const vueApp = createApp({
     let chimeTimeout: ReturnType<typeof setTimeout> | null = null;
     let countdownTimeout: ReturnType<typeof setTimeout> | null = null;
     let countdownInterval: ReturnType<typeof setInterval> | null = null;
+    let messageTimeout: ReturnType<typeof setTimeout> | null = null;
     // Queue for sequential animations (fixes bug #5)
     let animationQueue: string[] = [];
     let animationPlaying = false;
@@ -255,8 +256,10 @@ const vueApp = createApp({
       if (pool.length === 0) return;
       message.value = pickRandom(pool) ?? '';
       showMessage.value = true;
-      setTimeout(() => {
+      if (messageTimeout) clearTimeout(messageTimeout);
+      messageTimeout = setTimeout(() => {
         showMessage.value = false;
+        messageTimeout = null;
       }, config.value.timers.messageShowDuration);
     }
 
